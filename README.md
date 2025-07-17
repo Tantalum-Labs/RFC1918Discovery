@@ -22,6 +22,9 @@ rfc1918Disco is a fast reconnaissance script designed to discover live hosts, op
    sudo apt install masscan python3
    git clone https://github.com/your-org/rfc1918Disco.git
    ```
+
+   ![Missing Masscan](images/rfc1918Disco-install-masscan.png)
+
 ---
 
 ## Use
@@ -39,6 +42,8 @@ rfc1918Disco is a fast reconnaissance script designed to discover live hosts, op
    ```bash
    sudo ./rfc1918Disco.sh --quick
    ```
+
+   ![Scan Example](images/rfc1918Disco-running.png)
 
 ## Temporary Files
 Temporary working files such as masscan-*-rfc1918.txt and /tmp/discovered-* are used during the process. You may delete them after analysis.
