@@ -45,5 +45,9 @@ rfc1918Disco is a fast reconnaissance script designed to discover live hosts, op
 
    ![Scan Example](images/rfc1918Disco-running.png)
 
+   ![Sample Live Subnet Output](images/rfc1918Disco-sample-subnets-output.png)
+
+   ![Sample Targets Output](images/rfc1918Disco-sample-targets-output.png)
+
 ## Temporary Files
 Temporary working files such as masscan-*-rfc1918.txt and /tmp/discovered-* are used during the process. You may delete them after analysis.
