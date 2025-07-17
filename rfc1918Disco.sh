@@ -4,7 +4,7 @@ SUBNET_OUTPUT="target-subnets.txt"
 IP_OUTPUT="discovered-ips.txt"
 TARGETS_OUTPUT="discovered-targets.txt"
 
-EXTENSIVE_PORTS="22,23,53,80,83,111,135,139,161,389,443,445,515,631,8080,8443,3389,3306,1433,5900,5901,5902,5903,1723,502,102,2000,2375,2379,27017,9200,4444,15672"
+EXTENSIVE_PORTS="22,23,53,80,83,102,111,135,139,161,389,443,445,502,515,631,1433,1723,2000,2375,2379,3306,3389,4444,5900,5901,5902,5903,8080,8443,9200,15672,27017"
 QUICK_PORTS="22,80,443,445,3389"
 
 if [[ "$EUID" -ne 0 ]]; then
@@ -69,17 +69,11 @@ for SUBNET in $(ip route | \
     echo "${SUBNET}" >> /tmp/target-subnets.txt
 done
 
-cat masscan-172-rfc1918-subnets.txt >> /tmp/target-subnets.txt
-cat masscan-192-rfc1918-subnets.txt >> /tmp/target-subnets.txt
-cat masscan-10-rfc1918-subnets.txt  >> /tmp/target-subnets.txt
+cat masscan-*-rfc1918-subnets.txt >> /tmp/target-subnets.txt
 sort -u /tmp/target-subnets.txt > "${SUBNET_OUTPUT}"
 
-cat masscan-172-rfc1918-ips.txt >> /tmp/discovered-ips.txt
-cat masscan-192-rfc1918-ips.txt >> /tmp/discovered-ips.txt
-cat masscan-10-rfc1918-ips.txt  >> /tmp/discovered-ips.txt
+cat masscan-*-rfc1918-ips.txt >> /tmp/discovered-ips.txt
 sort -u /tmp/discovered-ips.txt > "${IP_OUTPUT}"
 
-cat masscan-172-rfc1918-targets.txt >> /tmp/discovered-targets.txt
-cat masscan-192-rfc1918-targets.txt >> /tmp/discovered-targets.txt
-cat masscan-10-rfc1918-targets.txt  >> /tmp/discovered-targets.txt
+cat masscan-*-rfc1918-targets.txt >> /tmp/discovered-targets.txt
 sort -u /tmp/discovered-targets.txt > "${TARGETS_OUTPUT}"
