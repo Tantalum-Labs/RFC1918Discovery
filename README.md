@@ -29,9 +29,11 @@ rfc1918Disco is a fast reconnaissance script designed to discover live hosts, op
 
 ## Use
 
-   Note: You must run this script as root due to raw packet access.
-   Note: If masscan-*-rfc1918.txt files already exists you will be asked if you want to overwrite or skip massscan. Skipping will result in the report generation from the existing files.
-   note: Doesn't work under WSL due to raw socket limitations.
+   > **Note:** You must run this script as root due to raw packet access.
+
+   > **Note:** If masscan-*-rfc1918.txt files already exists you will be asked if you want to overwrite or skip massscan. Skipping will result in the report generation from the existing files.
+
+   > **Note:** Doesn't work under WSL due to raw socket limitations.
 
    Full scan (default, extensive port set):
    ```bash
