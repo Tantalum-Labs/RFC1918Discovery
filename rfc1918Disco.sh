@@ -1,36 +1,85 @@
 #!/bin/bash
 
 SUBNET_OUTPUT="target-subnets.txt"
+IP_OUTPUT="discovered-ips.txt"
+TARGETS_OUTPUT="discovered-targets.txt"
 
-echo "[*] Scanning 192.168.0.0/16 in /24 chunks..."
-masscan 192.168.0.0/16 \
-  -p22,23,53,80,83,111,135,139,161,389,443,445,515,631,8080,8443,3389,3306,1433,5900,5901,5902,5903,1723,502,102,2000,2375,2379,27017,9200,4444,15672 \
-  --rate 10000 -oG masscan-192-rfc1918.txt
-python3 getSubnetsFromMasscanResults.py masscan-192-rfc1918.txt
-python3 getIpsFromMasscanResults.py masscan-192-rfc1918.txt
+EXTENSIVE_PORTS="22,23,53,80,83,111,135,139,161,389,443,445,515,631,8080,8443,3389,3306,1433,5900,5901,5902,5903,1723,502,102,2000,2375,2379,27017,9200,4444,15672"
+QUICK_PORTS="22,80,443,445,3389"
 
-echo "[*] Scanning 172.16.0.0/12 in /24 chunks..."
-masscan 172.16.0.0/12 \
-  -p22,23,53,80,83,111,135,139,161,389,443,445,515,631,8080,8443,3389,3306,1433,5900,5901,5902,5903,1723,502,102,2000,2375,2379,27017,9200,4444,15672 \
-  --rate 10000 -oG masscan-172-rfc1918.txt
-python3 getSubnetsFromMasscanResults.py masscan-172-rfc1918.txt
-python3 getIpsFromMasscanResults.py masscan-172-rfc1918.txt
+if [[ "$EUID" -ne 0 ]]; then
+    echo "[-] Error: This script must be run as root. Please run with sudo or as root user."
+    exit 1
+fi
 
-echo "[*] Scanning 10.0.0.0/8 in /24 chunks..."
-masscan 10.0.0.0/8 \
-  -p22,23,53,80,83,111,135,139,161,389,443,445,515,631,8080,8443,3389,3306,1433,5900,5901,5902,5903,1723,502,102,2000,2375,2379,27017,9200,4444,15672 \
-  --rate 10000 -oG masscan-10-rfc1918.txt
-python3 getSubnetsFromMasscanResults.py masscan-10-rfc1918.txt
-python3 getIpsFromMasscanResults.py masscan-10-rfc1918.txt
+if ! command -v masscan >/dev/null 2>&1; then
+    echo "[-] Error: masscan is not installed. Please install masscan to continue."
+    exit 1
+fi
 
-echo "[*] Getting networks from routing table.."
+if ! command -v python3 >/dev/null 2>&1; then
+    echo "[-] Error: python3 is not installed. Please install python3 to continue."
+    exit 1
+fi
+
+if [[ "$1" == "--quick" ]]; then
+    PORTS="${QUICK_PORTS}"
+    echo "[*] Using quick port set: ${PORTS}"
+else
+    PORTS="${EXTENSIVE_PORTS}"
+    echo "[*] Using extensive port set: ${PORTS}"
+fi
+
+function run_masscan() {
+    local cidr=$1
+    local filename=$2
+
+    if [[ -f "${filename}" ]]; then
+        read -p "[?] ${filename} already exists. Skip scan? [Y/n] " choice
+        case "$choice" in
+            [nN]*) ;;
+            *) echo "[*] Skipping scan of ${cidr}"; return ;;
+        esac
+    fi
+
+    echo "[*] Scanning ${cidr} in /24 chunks..."
+    masscan "${cidr}" -p "${PORTS}" --rate 10000 -oG "${filename}"
+}
+
+function process_results() {
+    local filename=$1
+    python3 getSubnetsFromMasscanResults.py "${filename}"
+    python3 getIpsFromMasscanResults.py "${filename}"
+    python3 getTargetsFromMasscanResults.py "${filename}"
+}
+
+run_masscan "192.168.0.0/16" "masscan-192-rfc1918.txt"
+process_results "masscan-192-rfc1918.txt"
+
+run_masscan "172.16.0.0/12" "masscan-172-rfc1918.txt"
+process_results "masscan-172-rfc1918.txt"
+
+run_masscan "10.0.0.0/8" "masscan-10-rfc1918.txt"
+process_results "masscan-10-rfc1918.txt"
+
+echo "[*] Getting networks from routing table..."
 for SUBNET in $(ip route | \
     grep -vE 'docker|br-|172\.17\.|172\.18\.|172\.19\.|169\.254\.|linkdown' | \
     grep -oE '([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/[0-9]+)' | sort -u); do
-    echo -e "${SUBNET}" > /tmp/target-subnets.txt
+    echo "${SUBNET}" >> /tmp/target-subnets.txt
 done
 
-cat masscan-172-rfc1918-subnets.txt | sort -u >> /tmp/target-subnets.txt
-cat masscan-192-rfc1918-subnets.txt | sort -u >> /tmp/target-subnets.txt
-cat masscan-10-rfc1918-subnets.txt | sort -u >> /tmp/target-subnets.txt
-cat /tmp/target-subnets.txt | sort -u > ${SUBNET_OUTPUT}
+cat masscan-172-rfc1918-subnets.txt >> /tmp/target-subnets.txt
+cat masscan-192-rfc1918-subnets.txt >> /tmp/target-subnets.txt
+cat masscan-10-rfc1918-subnets.txt  >> /tmp/target-subnets.txt
+sort -u /tmp/target-subnets.txt > "${SUBNET_OUTPUT}"
+
+cat masscan-172-rfc1918-ips.txt >> /tmp/discovered-ips.txt
+cat masscan-192-rfc1918-ips.txt >> /tmp/discovered-ips.txt
+cat masscan-10-rfc1918-ips.txt  >> /tmp/discovered-ips.txt
+sort -u /tmp/discovered-ips.txt > "${IP_OUTPUT}"
+
+cat masscan-172-rfc1918-targets.txt >> /tmp/discovered-targets.txt
+cat masscan-192-rfc1918-targets.txt >> /tmp/discovered-targets.txt
+cat masscan-10-rfc1918-targets.txt  >> /tmp/discovered-targets.txt
+sort -u /tmp/discovered-targets.txt > "${TARGETS_OUTPUT}"
