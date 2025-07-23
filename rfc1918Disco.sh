@@ -43,7 +43,7 @@ function run_masscan() {
     fi
 
     echo "[*] Scanning ${cidr} in /24 chunks..."
-    masscan "${cidr}" -p "${PORTS}" --rate 10000 -oG "${filename}"
+    masscan "${cidr}" -p "${PORTS}" --rate 1000 -oG "${filename}"
 }
 
 function process_results() {
