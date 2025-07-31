@@ -15,6 +15,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Install GitHub CLI and jq
         run: |
           sudo apt update
@@ -34,10 +37,10 @@ jobs:
             html_url=$(echo "$alert" | jq -r '.html_url')
 
             title="Dependabot: $package ($identifier)"
-            exists=$(gh issue list --label security-alert --state open --search "$package" --json title | jq '.[0].title')
+            exists=$(gh issue list --repo "${{ github.repository }}" --label security-alert --state open --search "$package" --json title | jq '.[0].title')
 
             if [[ "$exists" == "null" ]]; then
-              gh issue create --title "$title" --body "**Summary:** $summary\n\n**Severity:** $severity\n\n**Details:** $html_url" --label "security-alert"
+              gh issue create --repo "${{ github.repository }}" --title "$title" --body "**Summary:** $summary\n\n**Severity:** $severity\n\n**Details:** $html_url" --label "security-alert"
             fi
           done
 
@@ -53,10 +56,10 @@ jobs:
             html_url=$(echo "$alert" | jq -r '.html_url')
 
             title="CodeQL: $rule_id"
-            exists=$(gh issue list --label security-alert --state open --search "$rule_id" --json title | jq '.[0].title')
+            exists=$(gh issue list --repo "${{ github.repository }}" --label security-alert --state open --search "$rule_id" --json title | jq '.[0].title')
 
             if [[ "$exists" == "null" ]]; then
-              gh issue create --title "$title" --body "**Rule:** $rule_id\n\n**Severity:** $severity\n\n**Details:** $html_url" --label "security-alert"
+              gh issue create --repo "${{ github.repository }}" --title "$title" --body "**Rule:** $rule_id\n\n**Severity:** $severity\n\n**Details:** $html_url" --label "security-alert"
             fi
           done
 
@@ -71,10 +74,9 @@ jobs:
             html_url=$(echo "$alert" | jq -r '.html_url')
 
             title="Secret Leak: $secret_type"
-            exists=$(gh issue list --label security-alert --state open --search "$secret_type" --json title | jq '.[0].title')
+            exists=$(gh issue list --repo "${{ github.repository }}" --label security-alert --state open --search "$secret_type" --json title | jq '.[0].title')
 
             if [[ "$exists" == "null" ]]; then
-              gh issue create --title "$title" --body "**Type:** $secret_type\n\n**Details:** $html_url" --label "security-alert"
+              gh issue create --repo "${{ github.repository }}" --title "$title" --body "**Type:** $secret_type\n\n**Details:** $html_url" --label "security-alert"
             fi
           done
-
