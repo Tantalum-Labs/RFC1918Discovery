@@ -15,15 +15,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Install GitHub CLI
+      - name: Install GitHub CLI and jq
         run: |
           sudo apt update
           sudo apt install gh jq -y
-
-      - name: Authenticate GitHub CLI
-        env:
-          GH_TOKEN: ${{ secrets.GITHUBTOKEN }}
-        run: echo "$GH_TOKEN" | gh auth login --with-token
 
       - name: Poll Dependabot Alerts
         env:
