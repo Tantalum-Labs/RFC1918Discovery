@@ -1,0 +1,55 @@
+name: Create Security Issues
+
+on:
+  repository_vulnerability_alert:
+    types: [created]
+  code_scanning_alert:
+    types: [created]
+  secret_scanning_alert:
+    types: [created]
+
+jobs:
+  create-issue:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Generate issue content
+        id: generate
+        run: |
+          echo "## GitHub Security Alert" > issue.md
+
+          if [[ "${{ github.event_name }}" == "repository_vulnerability_alert" ]]; then
+            echo "**Type:** Dependabot Alert" >> issue.md
+            echo "**Package:** ${{ github.event.alert.affected_package_name }}" >> issue.md
+            echo "**Vulnerable Version Range:** ${{ github.event.alert.vulnerable_version_range }}" >> issue.md
+            echo "**Patched Version:** ${{ github.event.alert.first_patched_version.identifier }}" >> issue.md
+            echo "**Severity:** ${{ github.event.alert.severity }}" >> issue.md
+            echo "**Manifest Path:** ${{ github.event.alert.manifest_path }}" >> issue.md
+            echo "**More Info:** ${{ github.event.alert.external_reference }}" >> issue.md
+
+            echo "title=Security Alert: Dependabot - ${{ github.event.alert.affected_package_name }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.event_name }}" == "code_scanning_alert" ]]; then
+            echo "**Type:** CodeQL Alert" >> issue.md
+            echo "**Rule:** ${{ github.event.alert.rule.id }}" >> issue.md
+            echo "**Severity:** ${{ github.event.alert.rule.severity }}" >> issue.md
+            echo "**Description:** ${{ github.event.alert.rule.description }}" >> issue.md
+            echo "**File:** ${{ github.event.alert.instances[0].location.path }}" >> issue.md
+            echo "**Start Line:** ${{ github.event.alert.instances[0].location.start_line }}" >> issue.md
+            echo "**More Info:** ${{ github.event.alert.html_url }}" >> issue.md
+
+            echo "title=Security Alert: CodeQL - ${{ github.event.alert.rule.id }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.event_name }}" == "secret_scanning_alert" ]]; then
+            echo "**Type:** Secret Scanning Alert" >> issue.md
+            echo "**Secret Type:** ${{ github.event.alert.secret_type_display_name }}" >> issue.md
+            echo "**Location:** ${{ github.event.alert.secret_type }}" >> issue.md
+            echo "**More Info:** ${{ github.event.alert.html_url }}" >> issue.md
+
+            echo "title=Security Alert: Secret Leak - ${{ github.event.alert.secret_type_display_name }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create GitHub Issue
+        uses: peter-evans/create-issue-from-file@v4
+        with:
+          title: ${{ steps.generate.outputs.title }}
+          content-filepath: issue.md
+          labels: security-alert
