@@ -13,17 +13,21 @@ permissions:
 jobs:
   poll-alerts:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout (required for GH CLI)
-        uses: actions/checkout@v4
+      - name: Install GitHub CLI
+        run: |
+          sudo apt update
+          sudo apt install gh jq -y
 
-      - name: Setup GitHub CLI
-        uses: cli/cli-action@v2
+      - name: Authenticate GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUBTOKEN }}
+        run: echo "$GH_TOKEN" | gh auth login --with-token
 
-      - name: Authenticate GH CLI
-        run: echo "${{ secrets.GITHUBTOKEN }}" | gh auth login --with-token
-
-      - name: Fetch and create Dependabot issues
+      - name: Poll Dependabot Alerts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUBTOKEN }}
         run: |
           gh api -H "Accept: application/vnd.github+json" /repos/${{ github.repository }}/dependabot/alerts |
           jq -c '.[]' |
@@ -42,7 +46,9 @@ jobs:
             fi
           done
 
-      - name: Fetch and create Code Scanning issues
+      - name: Poll CodeQL Alerts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUBTOKEN }}
         run: |
           gh api -H "Accept: application/vnd.github+json" /repos/${{ github.repository }}/code-scanning/alerts |
           jq -c '.[]' |
@@ -59,7 +65,9 @@ jobs:
             fi
           done
 
-      - name: Fetch and create Secret Scanning issues
+      - name: Poll Secret Scanning Alerts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUBTOKEN }}
         run: |
           gh api -H "Accept: application/vnd.github+json" /repos/${{ github.repository }}/secret-scanning/alerts |
           jq -c '.[]' |
@@ -74,3 +82,4 @@ jobs:
               gh issue create --title "$title" --body "**Type:** $secret_type\n\n**Details:** $html_url" --label "security-alert"
             fi
           done
+
