@@ -40,7 +40,8 @@ jobs:
             exists=$(gh issue list --repo "${{ github.repository }}" --label security-alert --state open --search "$package" --json title | jq '.[0].title')
 
             if [[ "$exists" == "null" ]]; then
-              gh issue create --repo "${{ github.repository }}" --title "$title" --body "**Summary:** $summary\n\n**Severity:** $severity\n\n**Details:** $html_url" --label "security-alert"
+              body=$'**Summary:** '"$summary"$'\n\n**Severity:** '"$severity"$'\n\n**Details:** '"$html_url"
+              gh issue create --repo "${{ github.repository }}" --title "$title" --body "$body" --label "security-alert"
             fi
           done
 
@@ -59,7 +60,8 @@ jobs:
             exists=$(gh issue list --repo "${{ github.repository }}" --label security-alert --state open --search "$rule_id" --json title | jq '.[0].title')
 
             if [[ "$exists" == "null" ]]; then
-              gh issue create --repo "${{ github.repository }}" --title "$title" --body "**Rule:** $rule_id\n\n**Severity:** $severity\n\n**Details:** $html_url" --label "security-alert"
+              body=$'**Rule:** '"$rule_id"$'\n\n**Severity:** '"$severity"$'\n\n**Details:** '"$html_url"
+              gh issue create --repo "${{ github.repository }}" --title "$title" --body "$body" --label "security-alert"
             fi
           done
 
@@ -77,6 +79,7 @@ jobs:
             exists=$(gh issue list --repo "${{ github.repository }}" --label security-alert --state open --search "$secret_type" --json title | jq '.[0].title')
 
             if [[ "$exists" == "null" ]]; then
-              gh issue create --repo "${{ github.repository }}" --title "$title" --body "**Type:** $secret_type\n\n**Details:** $html_url" --label "security-alert"
+              body=$'**Type:** '"$secret_type"$'\n\n**Details:** '"$html_url"
+              gh issue create --repo "${{ github.repository }}" --title "$title" --body "$body" --label "security-alert"
             fi
           done
